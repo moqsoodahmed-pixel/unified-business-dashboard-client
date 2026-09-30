@@ -15,6 +15,7 @@ import { StatusBadge } from '../components/Badge.jsx';
 import { Modal, Drawer } from '../components/Modal.jsx';
 import { TextInput } from '../components/Field.jsx';
 import { formatMoney, formatNumber, formatDateTime, displayName, titleCase } from '../utils/format.js';
+import { AccountSelect } from '../components/AccountSelect.jsx';
 
 const CHECKOUT_SRC = 'https://checkout.razorpay.com/v1/checkout.js';
 
@@ -90,7 +91,7 @@ function RefundModal({ payment, onClose, onDone }) {
 
 function NewOrder({ onClose, onDone }) {
   const toast = useToast();
-  const [f, setF] = useState({ amount: '', description: '', name: '', phone: '', email: '' });
+  const [f, setF] = useState({ amount: '', description: '', name: '', phone: '', email: '', account: '' });
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState({});
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
@@ -99,6 +100,7 @@ function NewOrder({ onClose, onDone }) {
     setBusy(true); setErrors({});
     try {
       const body = { amount: Number(f.amount) };
+      if (f.account) body.account = f.account;
       if (f.description.trim()) body.description = f.description.trim();
       const customer = Object.fromEntries([['name', f.name], ['phone', f.phone], ['email', f.email]].filter(([, v]) => v.trim()).map(([k, v]) => [k, v.trim()]));
       if (Object.keys(customer).length) body.customer = customer;
@@ -126,6 +128,7 @@ function NewOrder({ onClose, onDone }) {
   return (
     <Modal title="Create payment order" onClose={onClose} footer={<><button className="btn" onClick={onClose}>Cancel</button><button className="btn primary" disabled={busy || !(Number(f.amount) >= 1)} onClick={checkout}>{busy ? 'Working…' : 'Create order & open checkout'}</button></>}>
       <div className="stack">
+        <AccountSelect type="razorpay" label="Razorpay account" value={f.account} onChange={(v) => setF({ ...f, account: v })} hint="Checkout, verification, refunds and webhooks for this order use the chosen account." />
         <TextInput label="Amount (INR)" type="number" min="1" step="0.01" value={f.amount} onChange={set('amount')} error={errors.amount} />
         <TextInput label="Description" value={f.description} onChange={set('description')} />
         <div className="grid2"><TextInput label="Customer name" value={f.name} onChange={set('name')} /><TextInput label="Phone" value={f.phone} onChange={set('phone')} /></div>

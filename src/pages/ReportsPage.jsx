@@ -18,7 +18,7 @@ const STATUS_OPTIONS = {
   revenue: [],
   integrations: ['completed', 'failed', 'ignored', 'rejected'],
 };
-const PROVIDER_OPTIONS = ['msg91', 'brevo', 'brevo2', 'razorpay'];
+const PROVIDER_OPTIONS = ['msg91', 'brevo', 'razorpay']; // a type matches all of its accounts
 
 const scalarSummary = (summary = {}) => Object.entries(summary).filter(([, v]) => ['number', 'string'].includes(typeof v));
 

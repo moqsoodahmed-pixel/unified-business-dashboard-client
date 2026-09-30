@@ -1,1 +1,0 @@
-import{j as e}from"./index-B10VyKwq.js";function l({title:a,subtitle:r,actions:s}){return e.jsxs("div",{className:"page-head",children:[e.jsxs("div",{children:[e.jsx("h1",{children:a}),r?e.jsx("p",{children:r}):null]}),s?e.jsx("div",{className:"row wrap",children:s}):null]})}export{l as P};

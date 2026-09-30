@@ -16,4 +16,9 @@ export const RANGES = [
   { value: 'today', label: 'Today' }, { value: 'yesterday', label: 'Yesterday' },
   { value: 'last7', label: 'Last 7 days' }, { value: 'last30', label: 'Last 30 days' }, { value: 'custom', label: 'Custom range' },
 ];
-export const PROVIDER_LABEL = { msg91: 'MSG91 WhatsApp', brevo: 'Brevo — Account 1', brevo2: 'Brevo — Account 2', razorpay: 'Razorpay', telegram: 'Telegram', mongodb: 'MongoDB', system: 'System' };
+export const PROVIDER_LABEL = { msg91: 'WhatsApp (MSG91)', brevo: 'Brevo — Account 1', brevo2: 'Brevo — Account 2', razorpay: 'Razorpay', telegram: 'Telegram', mongodb: 'MongoDB', system: 'System' };
+/** Integration types; filtering by a type matches every account of that type. */
+export const PROVIDER_TYPE_LABEL = { msg91: 'WhatsApp (MSG91)', brevo: 'Brevo', razorpay: 'Razorpay', telegram: 'Telegram' };
+export const PROVIDER_TYPE_OPTIONS = ['msg91', 'brevo', 'razorpay'].map((value) => ({ value, label: `${PROVIDER_TYPE_LABEL[value]} (all accounts)` }));
+/** Label for any account key, including accounts added from the Integrations page (e.g. brevo_k3f9x2). */
+export const providerLabel = (key) => PROVIDER_LABEL[key] || (PROVIDER_TYPE_LABEL[String(key).split('_')[0]] ? `${PROVIDER_TYPE_LABEL[String(key).split('_')[0]]} · ${String(key).split('_')[1]}` : key);

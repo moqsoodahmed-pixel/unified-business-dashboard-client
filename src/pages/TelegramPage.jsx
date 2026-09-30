@@ -13,6 +13,7 @@ import { Modal, ConfirmDialog } from '../components/Modal.jsx';
 import { TextInput, Switch } from '../components/Field.jsx';
 import { FilterBar } from '../components/FilterBar.jsx';
 import { formatDateTime } from '../utils/format.js';
+import { AccountSelect, useAccounts, accountLabel } from '../components/AccountSelect.jsx';
 
 /** Route presets. Patterns: exact event type, PREFIX_*, or * (see server matchesPattern). */
 const PRESETS = [
@@ -25,8 +26,8 @@ const PRESETS = [
 
 function RouteModal({ route, onClose, onSaved }) {
   const toast = useToast();
-  const discover = useApi(() => telegramService.discover(), [], { auto: false });
-  const [f, setF] = useState({ name: route?.name || '', chatId: route?.chatId || '', events: (route?.eventTypes || []).join(', '), description: route?.description || '' });
+  const [f, setF] = useState({ name: route?.name || '', chatId: route?.chatId || '', events: (route?.eventTypes || []).join(', '), description: route?.description || '', account: route?.account || '' });
+  const discover = useApi(() => telegramService.discover(f.account || undefined), [], { auto: false });
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const preset = (p) => setF({ ...f, name: f.name || p.name, events: p.eventTypes.join(', ') });
@@ -34,7 +35,7 @@ function RouteModal({ route, onClose, onSaved }) {
   async function save() {
     setBusy(true);
     try {
-      const body = { name: f.name.trim(), chatId: f.chatId.trim(), eventTypes: f.events.split(/[,\s]+/).map((s) => s.trim().toUpperCase()).filter(Boolean), description: f.description.trim() || undefined };
+      const body = { name: f.name.trim(), chatId: f.chatId.trim(), eventTypes: f.events.split(/[,\s]+/).map((s) => s.trim().toUpperCase()).filter(Boolean), description: f.description.trim() || undefined, account: f.account || null };
       if (route) await telegramService.updateRoute(route._id, body); else await telegramService.createRoute(body);
       toast.success('Route saved'); onSaved();
     } catch (e) { toast.error(e.message); } finally { setBusy(false); }
@@ -45,9 +46,10 @@ function RouteModal({ route, onClose, onSaved }) {
       <div className="stack">
         <div className="row" style={{ flexWrap: 'wrap' }}>{PRESETS.map((p) => <button key={p.label} type="button" className="chip" onClick={() => preset(p)}>{p.label}</button>)}</div>
         <TextInput label="Name" value={f.name} onChange={set('name')} />
+        <AccountSelect type="telegram" label="Send with bot" value={f.account} onChange={(v) => setF({ ...f, account: v })} hint="The bot must be a member of the chat. “Find chats” uses this bot." />
         <TextInput label="Chat ID" value={f.chatId} onChange={set('chatId')} hint="Numeric chat ID (groups are negative). Message your bot first, then use “Find chats”." />
         <div><button type="button" className="btn sm" onClick={() => discover.reload()} disabled={discover.loading}>{discover.loading ? 'Looking…' : 'Find chats that messaged the bot'}</button></div>
-        {discover.error ? <div className="alert error">{discover.error.message}</div> : null}
+        {discover.error ? <div className="alert err">{discover.error.message}</div> : null}
         {chats.length ? <div className="row" style={{ flexWrap: 'wrap' }}>{chats.map((c) => <button key={c.chatId} type="button" className="chip" onClick={() => setF({ ...f, chatId: c.chatId })}>{c.title || c.chatId} · {c.chatId}</button>)}</div> : null}
         <TextInput label="Event types" value={f.events} onChange={set('events')} hint="Comma separated. Exact types (PAYMENT_SUCCESS), prefixes (PAYMENT_*) or * for all." />
         <TextInput label="Description" value={f.description} onChange={set('description')} />
@@ -63,6 +65,7 @@ function Routes() {
   const [edit, setEdit] = useState(null);
   const [del, setDel] = useState(null);
   const write = can('telegram:write');
+  const bots = useAccounts('telegram');
   async function test(r) {
     try { await telegramService.testRoute(r._id); toast.success(`Test message sent to ${r.name}`); } catch (e) { toast.error(e.message); }
   }
@@ -76,6 +79,7 @@ function Routes() {
         <DataTable rows={d} columns={[
           { key: 'name', header: 'Name', render: (r) => <b>{r.name}</b> },
           { key: 'chatId', header: 'Chat ID', render: (r) => <code>{r.chatId}</code> },
+          ...(bots.filter((b) => b.configured).length > 1 || d.some((r) => r.account) ? [{ key: 'account', header: 'Bot', render: (r) => <span className="muted">{r.account ? accountLabel(bots, r.account) : 'Default'}</span> }] : []),
           { key: 'eventTypes', header: 'Events', render: (r) => (r.eventTypes || []).slice(0, 4).map((t) => <span key={t} className="chip">{t}</span>).concat((r.eventTypes || []).length > 4 ? [<Badge key="more" plain>+{r.eventTypes.length - 4}</Badge>] : []) },
           { key: 'enabled', header: 'Enabled', render: (r) => <Switch label={`Enable ${r.name}`} checked={r.enabled} disabled={!write} onChange={(v) => toggle(r, v)} /> },
           { key: 'a', header: '', render: (r) => write ? <span className="row"><button className="btn sm" onClick={() => test(r)}>Send test</button><button className="btn sm" onClick={() => setEdit(r)}>Edit</button><button className="btn sm danger" onClick={() => setDel(r)}>Delete</button></span> : null },

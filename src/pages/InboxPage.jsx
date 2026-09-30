@@ -10,6 +10,7 @@ import { MessageBubble } from '../components/inbox/MessageBubble.jsx';
 import { InfoPanel } from '../components/inbox/InfoPanel.jsx';
 import { TemplateModal, MediaModal } from '../components/inbox/SendPanels.jsx';
 import { displayName, displayPhone } from '../utils/format.js';
+import { useAccounts, accountLabel } from '../components/AccountSelect.jsx';
 
 export default function InboxPage() {
   const toast = useToast();
@@ -24,6 +25,9 @@ export default function InboxPage() {
   const [modal, setModal] = useState(null);
   const [sending, setSending] = useState(false);
   const [needsTemplate, setNeedsTemplate] = useState(false);
+  const [fromAccount, setFromAccount] = useState(''); // '' = reply from the number the customer wrote to
+  const waAccounts = useAccounts('msg91');
+  const waReady = waAccounts.filter((a) => a.configured);
   const endRef = useRef(null);
 
   const list = useApi(() => whatsappService.conversations({ view, q, limit: 50 }), [view, q]);
@@ -55,7 +59,7 @@ export default function InboxPage() {
   async function send(payload) {
     setSending(true);
     try {
-      await whatsappService.send({ conversationId: selectedId, ...payload });
+      await whatsappService.send({ conversationId: selectedId, ...(fromAccount ? { account: fromAccount } : {}), ...payload });
       setText(''); setModal(null); setNeedsTemplate(false);
       msgs.reload({ silent: true }); list.reload({ silent: true });
     } catch (e) {
@@ -63,6 +67,8 @@ export default function InboxPage() {
       toast.error(e.message);
     } finally { setSending(false); }
   }
+
+  useEffect(() => { setFromAccount(''); }, [selectedId]);
 
   const name = conv ? (displayName(conv.customerId) === 'Unknown' ? displayPhone(conv.phone) : displayName(conv.customerId)) : '';
   const canWrite = can('whatsapp:write');
@@ -80,6 +86,13 @@ export default function InboxPage() {
           <>
             <div className="row between" style={{ padding: '10px 14px', borderBottom: '1px solid var(--line)' }}>
               <div><button className="btn ghost sm menu-btn" onClick={() => { setSelectedId(null); setConv(null); }}>Back</button> <b>{name}</b></div>
+              {waReady.length > 1 && canWrite ? (
+                <select className="select" style={{ width: 210 }} value={fromAccount} onChange={(e) => setFromAccount(e.target.value)} aria-label="Send from WhatsApp number"
+                  title="Which WhatsApp number your replies are sent from">
+                  <option value="">{conv.account ? `Reply from ${accountLabel(waAccounts, conv.account)}` : 'Reply from default number'}</option>
+                  {waReady.map((a) => <option key={a.key} value={a.key}>Send from {a.label}</option>)}
+                </select>
+              ) : null}
               <input className="input" style={{ width: 200 }} type="search" placeholder="Search in chat" value={msgQ} onChange={(e) => setMsgQ(e.target.value)} aria-label="Search in conversation" />
             </div>
             <div className="chat">

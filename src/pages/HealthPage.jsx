@@ -41,7 +41,7 @@ export default function HealthPage() {
               <div className="kv"><span>MongoDB</span><StatusBadge status={h.database.ok ? 'healthy' : 'down'} label={h.database.ok ? '✓ Healthy' : '✕ Down'} /></div>
               {h.providers.map((p) => (
                 <div key={p.provider}>
-                  <div className="kv"><span>{PROVIDER_LABEL[p.provider] || p.label}</span><StatusBadge status={p.status} label={p.status === 'connected' ? '✓ Connected' : LABEL[p.status]} /></div>
+                  <div className="kv"><span>{p.label || PROVIDER_LABEL[p.provider]}</span><StatusBadge status={p.status} label={p.status === 'connected' ? '✓ Connected' : LABEL[p.status]} /></div>
                   <div className="small muted">{p.lastSuccessAt ? `Last success ${timeAgo(p.lastSuccessAt)}` : 'No successful call yet'}{p.lastError ? ` · Last error: ${p.lastError}` : ''}</div>
                 </div>
               ))}

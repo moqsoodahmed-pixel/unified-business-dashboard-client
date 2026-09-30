@@ -15,8 +15,11 @@ import { StatusBadge } from '../components/Badge.jsx';
 import { Drawer, Modal, ConfirmDialog } from '../components/Modal.jsx';
 import { TextInput, Select, Switch } from '../components/Field.jsx';
 import { formatDateTime, formatNumber, displayName } from '../utils/format.js';
+import { useAccounts } from '../components/AccountSelect.jsx';
 
-const ACCOUNT_LABEL = { brevo: 'Account 1', brevo2: 'Account 2' };
+const FALLBACK_LABEL = { brevo: 'Brevo — Account 1', brevo2: 'Brevo — Account 2' };
+/** Name of a Brevo account key; falls back when the viewer cannot list accounts. */
+const brevoLabel = (rows, key) => (key ? rows.find((r) => r.key === key)?.label || FALLBACK_LABEL[key] || key : '—');
 const splitAddresses = (s) => s.split(/[,;\s]+/).map((x) => x.trim()).filter(Boolean);
 const addrText = (list) => (list || []).map((a) => a.name ? `${a.name} <${a.email}>` : a.email).join(', ');
 
@@ -29,6 +32,7 @@ const readFileBase64 = (file) => new Promise((resolve, reject) => {
 
 function EmailDetail({ id, onClose }) {
   const res = useApi(() => emailService.get(id), [id]);
+  const brevoAccounts = useAccounts('brevo');
   return (
     <Drawer title="Email details" onClose={onClose}>
       <Async res={res}>{(e) => (
@@ -37,7 +41,7 @@ function EmailDetail({ id, onClose }) {
           <div className="kv"><span>To</span><span>{addrText(e.to)}</span></div>
           {e.cc?.length ? <div className="kv"><span>CC</span><span>{addrText(e.cc)}</span></div> : null}
           <div className="kv"><span>Subject</span><b>{e.subject}</b></div>
-          {e.brevoAccount ? <div className="kv"><span>Sent via</span><span>Brevo {ACCOUNT_LABEL[e.brevoAccount] || e.brevoAccount}{e.from?.email ? ` (${e.from.email})` : ''}</span></div> : null}
+          {e.brevoAccount ? <div className="kv"><span>Sent via</span><span>{brevoLabel(brevoAccounts, e.brevoAccount)}{e.from?.email ? ` (${e.from.email})` : ''}</span></div> : null}
           <div className="kv"><span>Sent</span><span>{formatDateTime(e.createdAt)}</span></div>
           <div className="kv"><span>Opens / clicks</span><span>{e.openCount || 0} / {e.clickCount || 0}</span></div>
           {e.error?.message ? <div className="alert error">{e.error.message}</div> : null}
@@ -56,13 +60,14 @@ function History() {
   const [filters, setFilters] = useState({ q: '', status: '', range: 'last30' });
   const [openId, setOpenId] = useState(null);
   const stats = useApi(() => emailService.stats(filters), [JSON.stringify(filters)]);
+  const brevoAccounts = useAccounts('brevo');
   const list = usePagedList(emailService.list, filters);
   useSocketEvent('email:update', () => { list.reload({ silent: true }); stats.reload({ silent: true }); });
   const s = stats.data;
   return (
     <>
       <div className="stats">
-        <StatCard channel="email" label="Total sent" value={formatNumber(s?.total)} sub={s?.byAccount ? `Acct 1: ${formatNumber(s.byAccount.brevo)} · Acct 2: ${formatNumber(s.byAccount.brevo2)}` : undefined} />
+        <StatCard channel="email" label="Total sent" value={formatNumber(s?.total)} sub={s?.byAccount && Object.keys(s.byAccount).length ? Object.entries(s.byAccount).map(([k, n]) => `${brevoLabel(brevoAccounts, k).replace(/^Brevo — /, '')}: ${formatNumber(n)}`).join(' · ') : undefined} />
         <StatCard channel="email" label="Delivered" value={formatNumber(s?.delivered)} />
         <StatCard channel="email" label="Failed" value={formatNumber(s?.failed)} />
         <StatCard channel="email" label="Bounced" value={formatNumber(s?.bounced)} />
@@ -81,7 +86,7 @@ function History() {
               { key: 'subject', header: 'Subject', render: (e) => <b>{e.subject || '(no subject)'}</b> },
               { key: 'to', header: 'To', render: (e) => <span className="truncate">{addrText(e.to)}</span> },
               { key: 'status', header: 'Status', render: (e) => <StatusBadge status={e.status} /> },
-              { key: 'brevoAccount', header: 'Account', render: (e) => <span className="muted">{ACCOUNT_LABEL[e.brevoAccount] || '—'}</span> },
+              { key: 'brevoAccount', header: 'Account', render: (e) => <span className="muted">{brevoLabel(brevoAccounts, e.brevoAccount)}</span> },
               { key: 'createdAt', header: 'Sent', render: (e) => <span className="muted">{formatDateTime(e.createdAt)}</span> },
             ]} />
             <Pagination page={list.page} pages={d.pages} total={d.total} onPage={list.setPage} />
@@ -123,14 +128,14 @@ function Compose({ onSent }) {
   const acct = accounts.data || [];
   const ready = acct.filter((a) => a.configured);
   const accountOptions = [
-    { value: 'auto', label: ready.length > 1 ? 'Auto (balance between both accounts)' : 'Auto' },
+    { value: 'auto', label: ready.length > 1 ? `Auto (balance across ${ready.length} accounts)` : 'Auto' },
     ...acct.map((a) => ({ value: a.account, label: `${a.label}${a.configured ? (a.senderEmail ? ` — ${a.senderEmail}` : '') : ' (not configured)'}`, disabled: !a.configured })),
   ];
   const tplOptions = [{ value: '', label: 'No template' }, ...((templates.data || []).filter((t) => t.enabled !== false).map((t) => ({ value: t._id, label: t.name })))];
   return (
     <div className="card card-pad stack" style={{ maxWidth: 820 }}>
       <Select label="Send with" value={f.account} onChange={set('account')} options={accountOptions}
-        hint={f.account === 'auto' ? 'Uses the account with fewer emails in the last 24h and switches to the other one if Brevo rejects the send.' : 'Sends only through this account.'} />
+        hint={f.account === 'auto' ? 'Uses the account with the fewest emails in the last 24h and switches to another account if Brevo rejects the send.' : 'Sends only through this account.'} />
       <TextInput label="To" value={f.to} onChange={set('to')} hint="Separate several addresses with commas" error={errors.to} />
       <div className="grid2"><TextInput label="CC" value={f.cc} onChange={set('cc')} /><TextInput label="BCC" value={f.bcc} onChange={set('bcc')} /></div>
       <Select label="Template" value={f.templateId} onChange={set('templateId')} options={tplOptions} />
@@ -231,7 +236,7 @@ export default function EmailPage() {
   const tabs = [{ value: 'history', label: 'History' }, ...(can('email:send') ? [{ value: 'compose', label: 'Compose' }] : []), { value: 'templates', label: 'Templates' }, { value: 'recipients', label: 'Recipients' }];
   return (
     <>
-      <PageHeader title="Email" subtitle="Send through your two Brevo accounts and track delivery" />
+      <PageHeader title="Email" subtitle="Send through your Brevo accounts and track delivery" />
       <Tabs tabs={tabs} value={tab} onChange={setTab} />
       {tab === 'history' && <History key={nonce} />}
       {tab === 'compose' && <Compose onSent={() => { setNonce(nonce + 1); setTab('history'); }} />}

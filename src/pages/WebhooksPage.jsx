@@ -10,7 +10,7 @@ import { Pagination } from '../components/Pagination.jsx';
 import { Async, EmptyState } from '../components/States.jsx';
 import { StatusBadge } from '../components/Badge.jsx';
 import { Drawer } from '../components/Modal.jsx';
-import { PROVIDER_LABEL } from '../constants/index.js';
+import { providerLabel, PROVIDER_TYPE_OPTIONS } from '../constants/index.js';
 import { formatDateTime } from '../utils/format.js';
 
 function Detail({ id, onClose, onRetried }) {
@@ -27,7 +27,7 @@ function Detail({ id, onClose, onRetried }) {
     <Drawer title="Webhook event" onClose={onClose}>
       <Async res={res}>{(e) => (
         <div className="stack">
-          <div className="kv"><span>Provider</span><b>{PROVIDER_LABEL[e.provider] || e.provider}</b></div>
+          <div className="kv"><span>Provider</span><b>{providerLabel(e.provider)}</b></div>
           <div className="kv"><span>Event</span><span>{e.eventType || '—'}</span></div>
           <div className="kv"><span>Event ID</span><code className="truncate">{e.eventId}</code></div>
           <div className="kv"><span>Status</span><StatusBadge status={e.status} /></div>
@@ -62,14 +62,14 @@ export default function WebhooksPage() {
       </Async>
       <div className="card">
         <FilterBar filters={filters} onChange={setFilters} fields={[
-          { key: 'provider', type: 'select', placeholder: 'Any provider', options: ['msg91', 'brevo', 'brevo2', 'razorpay'].map((value) => ({ value, label: PROVIDER_LABEL[value] })) },
+          { key: 'provider', type: 'select', placeholder: 'Any provider', options: PROVIDER_TYPE_OPTIONS },
           { key: 'status', type: 'select', placeholder: 'Any status', options: ['completed', 'failed', 'ignored', 'rejected', 'processing'] },
           { key: 'range', type: 'range' },
         ]} />
         <Async res={list} isEmpty={(d) => !d.items.length} empty={<EmptyState title="No webhook events in this range" hint="Events appear after a provider calls one of the endpoints above." />}>{(d) => (
           <>
             <DataTable rows={d.items} onRowClick={(e) => setOpen(e._id)} columns={[
-              { key: 'provider', header: 'Provider', render: (e) => <b>{PROVIDER_LABEL[e.provider] || e.provider}</b> },
+              { key: 'provider', header: 'Provider', render: (e) => <b>{providerLabel(e.provider)}</b> },
               { key: 'endpoint', header: 'Endpoint', render: (e) => <code>{e.endpoint || '—'}</code> },
               { key: 'eventType', header: 'Event', render: (e) => e.eventType || '—' },
               { key: 'status', header: 'Status', render: (e) => <StatusBadge status={e.status} /> },

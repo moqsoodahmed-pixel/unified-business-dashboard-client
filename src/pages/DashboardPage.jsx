@@ -14,7 +14,7 @@ import { Timeline } from '../components/Timeline.jsx';
 import { displayName, formatMoney, formatNumber, timeAgo } from '../utils/format.js';
 import { PROVIDER_LABEL } from '../constants/index.js';
 
-const C = { wa: '#1f9d55', mail: '#2f6fdb', pay: '#c2571a', tg: '#229ed9', cust: '#0f6b5c', mail2: '#7c4dff', bad: '#c0392b' };
+const C = { wa: '#1f9d55', mail: '#2f6fdb', pay: '#c2571a', tg: '#229ed9', cust: '#0f6b5c', bad: '#c0392b' };
 
 function TodayLine({ d }) {
   const bits = [];
@@ -59,7 +59,7 @@ export default function DashboardPage() {
             {d.email && <ChartCard title="Email activity"><TimeSeries type="bar" data={d.email.series} series={[{ key: 'sent', name: 'Sent', color: C.mail }, { key: 'delivered', name: 'Delivered', color: '#8fb3ee' }, { key: 'failed', name: 'Failed', color: C.bad }]} /></ChartCard>}
             {d.customers && <ChartCard title="Customer growth"><TimeSeries data={d.customers.growth} series={[{ key: 'total', name: 'Customers', color: C.cust }]} /></ChartCard>}
           </div>
-          {d.integrationActivity ? <ChartCard title="Integration activity" subtitle="webhooks received"><TimeSeries type="bar" data={d.integrationActivity} series={[{ key: 'msg91', name: 'MSG91', color: C.wa, stack: 'a' }, { key: 'brevo', name: 'Brevo 1', color: C.mail, stack: 'a' }, { key: 'brevo2', name: 'Brevo 2', color: C.mail2, stack: 'a' }, { key: 'razorpay', name: 'Razorpay', color: C.pay, stack: 'a' }]} /></ChartCard> : null}
+          {d.integrationActivity ? <ChartCard title="Integration activity" subtitle="webhooks received"><TimeSeries type="bar" data={d.integrationActivity} series={[{ key: 'msg91', name: 'MSG91', color: C.wa, stack: 'a' }, { key: 'brevo', name: 'Brevo', color: C.mail, stack: 'a' }, { key: 'razorpay', name: 'Razorpay', color: C.pay, stack: 'a' }]} /></ChartCard> : null}
 
           <div className="grid2">
             {d.whatsapp && (
@@ -82,7 +82,7 @@ export default function DashboardPage() {
             {d.health && (
               <div className="card"><div className="card-head"><h3>API health</h3>{can('health:read') && <Link to="/health" className="small">Details</Link>}</div>
                 <div className="card-pad stack">{d.health.map((h) => (
-                  <div key={h.provider} className="row between"><span>{PROVIDER_LABEL[h.provider] || h.label}</span><StatusBadge status={h.status} /></div>))}</div></div>)}
+                  <div key={h.provider} className="row between"><span>{h.label || PROVIDER_LABEL[h.provider]}</span><StatusBadge status={h.status} /></div>))}</div></div>)}
           </div>
         </div>
       )}</Async>

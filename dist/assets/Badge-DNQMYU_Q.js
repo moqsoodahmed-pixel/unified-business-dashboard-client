@@ -1,0 +1,1 @@
+import{j as a,C as t}from"./index-MVUJCcwQ.js";import{S as i}from"./index-ljK3KKuA.js";function n({tone:e="",plain:r=!1,children:s}){return a.jsx("span",{className:`badge ${e} ${r?"plain":""}`,children:s})}function p({status:e,label:r}){return e?a.jsx(n,{tone:i[e]??"",children:r||t(e)}):a.jsx(n,{plain:!0,children:"—"})}export{n as B,p as S};

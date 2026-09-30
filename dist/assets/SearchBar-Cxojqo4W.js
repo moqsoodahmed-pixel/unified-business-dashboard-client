@@ -1,1 +1,0 @@
-import{r,O as o,j as i}from"./index-B10VyKwq.js";function p({value:t="",onChange:n,placeholder:s="Search…"}){const[a,u]=r.useState(t),e=o(a,300);return r.useEffect(()=>{e!==t&&n(e)},[e]),i.jsx("input",{className:"input",type:"search",value:a,onChange:c=>u(c.target.value),placeholder:s,"aria-label":s,style:{minWidth:220}})}export{p as S};
