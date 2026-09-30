@@ -1,0 +1,19 @@
+export const STATUS_TONE = {
+  // generic
+  connected: 'green', healthy: 'green', up: 'green', active: 'green', completed: 'green', success: 'green', ok: 'green',
+  error: 'red', failed: 'red', down: 'red', rejected: 'red', blocked: 'red', bounced: 'red', invalid: 'red', spam: 'red',
+  degraded: 'amber', pending: 'amber', queued: 'amber', processing: 'amber', untested: 'amber', warning: 'amber', deferred: 'amber', lead: 'amber', authorized: 'amber',
+  not_configured: '', disconnected: '', ignored: '', archived: '', inactive: '',
+  // messaging
+  sent: 'blue', delivered: 'green', read: 'green', received: 'blue', opened: 'green', clicked: 'green',
+  // payments
+  captured: 'green', refunded: 'amber', partially_refunded: 'amber', created: 'blue', paid: 'green',
+  // conversation
+  open: 'blue', resolved: 'green',
+};
+export const CHANNEL_LABEL = { whatsapp: 'WhatsApp', email: 'Email', payment: 'Payment', telegram: 'Telegram', customer: 'Customer', auth: 'Security', system: 'System', webhook: 'Webhook' };
+export const RANGES = [
+  { value: 'today', label: 'Today' }, { value: 'yesterday', label: 'Yesterday' },
+  { value: 'last7', label: 'Last 7 days' }, { value: 'last30', label: 'Last 30 days' }, { value: 'custom', label: 'Custom range' },
+];
+export const PROVIDER_LABEL = { msg91: 'MSG91 WhatsApp', brevo: 'Brevo — Account 1', brevo2: 'Brevo — Account 2', razorpay: 'Razorpay', telegram: 'Telegram', mongodb: 'MongoDB', system: 'System' };

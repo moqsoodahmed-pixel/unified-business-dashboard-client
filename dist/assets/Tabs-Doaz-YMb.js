@@ -1,0 +1,1 @@
+import{j as l}from"./index-B10VyKwq.js";function i({tabs:s,value:e,onChange:r}){return l.jsx("div",{className:"tabs",role:"tablist",children:s.map(a=>l.jsx("button",{role:"tab","aria-selected":e===a.value,className:`tab ${e===a.value?"active":""}`,onClick:()=>r(a.value),children:a.label},a.value))})}export{i as T};

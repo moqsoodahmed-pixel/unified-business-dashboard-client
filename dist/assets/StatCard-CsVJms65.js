@@ -1,0 +1,1 @@
+import{j as s}from"./index-B10VyKwq.js";function d({label:e,value:l,sub:a,channel:r="",title:i}){return s.jsxs("div",{className:`card stat ${r}`,title:i,children:[s.jsx("div",{className:"label",children:e}),s.jsx("div",{className:"value",children:l}),a?s.jsx("div",{className:"sub",children:a}):null]})}export{d as S};
